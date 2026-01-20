@@ -1,0 +1,19 @@
+{
+  "slug": "example_skill",
+  "name": "Example Skill",
+  "type": "topic",
+  "status": "active",
+  "priority": 0.5,
+  "description": "Short description of the skill focus.",
+  "audiences": ["audience_1", "audience_2"],
+  "goals": ["awareness", "thought_leadership"],
+  "content_patterns": {
+    "formats": ["short_post", "thread"],
+    "cadence": "weekly",
+    "angles": ["angle_1", "angle_2"]
+  },
+  "CTAs": ["CTA 1", "CTA 2"],
+  "voice_notes": ["Note 1", "Note 2"],
+  "research_queries": ["query 1", "query 2"],
+  "reply_style": "Short guidance for replies."
+}

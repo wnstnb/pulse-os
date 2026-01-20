@@ -1,0 +1,135 @@
+[
+  {
+    "slug": "tuon_core",
+    "name": "Tuon - Knowledge Gravity",
+    "type": "product",
+    "status": "active",
+    "priority": 0.85,
+    "description": "Tuon is a knowledge workflow that keeps ideas in a single gravity well so they compound instead of fragmenting.",
+    "audiences": [
+      "founders building knowledge-heavy products",
+      "researchers and operators who live in docs",
+      "writers who want to publish from a single source of truth"
+    ],
+    "goals": [
+      "thought_leadership",
+      "awareness",
+      "signup"
+    ],
+    "content_patterns": {
+      "formats": [
+        "short_post",
+        "thread",
+        "reply"
+      ],
+      "cadence": "daily",
+      "angles": [
+        "knowledge gravity vs knowledge scatter",
+        "workflow pain points in AI note tools",
+        "why consolidation beats automation"
+      ]
+    },
+    "CTAs": [
+      "Read the doc",
+      "Try the workflow",
+      "Join the waitlist"
+    ],
+    "voice_notes": [
+      "Direct, precise, slightly contrarian",
+      "Use concrete examples from building Tuon",
+      "Avoid hype and buzzwords"
+    ],
+    "research_queries": [
+      "knowledge management workflows for founders",
+      "pain points in AI note taking tools",
+      "how creators manage research and publishing"
+    ],
+    "reply_style": "Offer a tight insight + a short question to invite response."
+  },
+  {
+    "slug": "ai_notes_market",
+    "name": "AI Notes Market Signals",
+    "type": "topic",
+    "status": "active",
+    "priority": 0.65,
+    "description": "Track market signals in AI note-taking, PKM, and research tooling.",
+    "audiences": [
+      "product leaders in productivity tools",
+      "investors looking at PKM",
+      "builders shipping in AI productivity"
+    ],
+    "goals": [
+      "thought_leadership",
+      "awareness"
+    ],
+    "content_patterns": {
+      "formats": [
+        "short_post",
+        "thread"
+      ],
+      "cadence": "3x_week",
+      "angles": [
+        "what users actually complain about",
+        "why AI summaries alone do not stick",
+        "emerging UX patterns in PKM"
+      ]
+    },
+    "CTAs": [
+      "Share your workflow",
+      "Point me to a great tool"
+    ],
+    "voice_notes": [
+      "Analyst tone, grounded in user research",
+      "Use data and quotes when possible"
+    ],
+    "research_queries": [
+      "AI note taking complaints",
+      "PKM tool switching fatigue",
+      "user retention for productivity apps"
+    ],
+    "reply_style": "Summarize the signal, then ask for counter-examples."
+  },
+  {
+    "slug": "founder_ops",
+    "name": "Founder Ops and Systems",
+    "type": "vertical",
+    "status": "active",
+    "priority": 0.55,
+    "description": "Systems for founders to stay in creative flow while shipping fast.",
+    "audiences": [
+      "indie hackers",
+      "early-stage founders",
+      "product operators"
+    ],
+    "goals": [
+      "awareness",
+      "thought_leadership"
+    ],
+    "content_patterns": {
+      "formats": [
+        "short_post",
+        "reply"
+      ],
+      "cadence": "4x_week",
+      "angles": [
+        "flow-preserving workflows",
+        "how to reduce context switching",
+        "systems that compound decision quality"
+      ]
+    },
+    "CTAs": [
+      "Steal the system",
+      "What tool do you use?"
+    ],
+    "voice_notes": [
+      "Practical, founder-to-founder",
+      "Keep it short and actionable"
+    ],
+    "research_queries": [
+      "founder workflow context switching",
+      "tools for founder execution",
+      "daily operating system for creators"
+    ],
+    "reply_style": "Offer a quick framework and a friendly invite."
+  }
+]
