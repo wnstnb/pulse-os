@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from agent_service.database import DatabaseHandler
+from x_agent_os.database import DatabaseHandler
 
 
 class MetricsCollector:

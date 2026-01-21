@@ -1,1 +1,37 @@
 pulse-os.code-workspace
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets
+.env
+.env.*
+
+# SQLite / data
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Typefully encrypted credentials
+.typefully_credentials.json
+.typefully_key
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+.vercel/

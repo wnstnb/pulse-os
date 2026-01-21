@@ -1,10 +1,10 @@
-from agent_service.config import PERPLEXITY_API_KEY
+from x_agent_os.config import PERPLEXITY_API_KEY
 from openai import OpenAI # Import OpenAI
 import json # For parsing if sources are in a JSON string
 import os
 from typing import Optional
-from agent_service.database import DatabaseHandler
-from agent_service.content_fingerprinting import IncrementalProcessingManager
+from x_agent_os.database import DatabaseHandler
+from x_agent_os.content_fingerprinting import IncrementalProcessingManager
 
 class SearchAgent:
     def __init__(self):

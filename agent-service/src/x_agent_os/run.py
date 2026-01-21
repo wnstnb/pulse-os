@@ -1,6 +1,6 @@
 import argparse
 
-from agent_service.orchestrator import run_daily_pipeline, run_metrics_update
+from x_agent_os.orchestrator import run_daily_pipeline, run_metrics_update
 
 
 def main():

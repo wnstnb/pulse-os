@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
-from agent_service.database import DatabaseHandler
+from x_agent_os.database import DatabaseHandler
 
 
 class SkillManager:
@@ -10,8 +10,8 @@ class SkillManager:
         self.db = db or DatabaseHandler()
 
     def _seed_path(self) -> Path:
-        repo_root = Path(__file__).resolve().parents[2]
-        return repo_root / "agent-service" / "skills_seed.json"
+        service_root = Path(__file__).resolve().parents[2]
+        return service_root / "skills_seed.json"
 
     def load_seed_skills(self) -> List[Dict[str, Any]]:
         seed_path = self._seed_path()
@@ -32,6 +32,24 @@ class SkillManager:
                 config_json=skill,
             )
         return skills
+
+    def seed_missing_skills(self) -> List[str]:
+        skills = self.load_seed_skills()
+        existing = {row["slug"] for row in self.db.list_skills(include_inactive=True)}
+        inserted = []
+        for skill in skills:
+            if skill["slug"] in existing:
+                continue
+            self.db.upsert_skill(
+                slug=skill["slug"],
+                name=skill["name"],
+                skill_type=skill["type"],
+                status=skill.get("status", "active"),
+                priority=skill.get("priority", 0.5),
+                config_json=skill,
+            )
+            inserted.append(skill["slug"])
+        return inserted
 
     def get_active_skills(self) -> List[Dict[str, Any]]:
         return self.db.get_active_skills()

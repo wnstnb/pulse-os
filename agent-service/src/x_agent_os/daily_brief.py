@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from agent_service.database import DatabaseHandler
+from x_agent_os.database import DatabaseHandler
 
 
 class DailyBriefGenerator:

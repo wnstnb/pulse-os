@@ -1,10 +1,10 @@
 import google.generativeai as genai
-from agent_service.config import GOOGLE_API_KEY
+from x_agent_os.config import GOOGLE_API_KEY
 import re # Import re module
 import os
 import json
 from typing import Optional
-from agent_service.database import DatabaseHandler
+from x_agent_os.database import DatabaseHandler
 
 class EditorAgent:
     def __init__(self):
@@ -12,9 +12,8 @@ class EditorAgent:
             raise ValueError("GOOGLE_API_KEY not configured.")
         genai.configure(api_key=GOOGLE_API_KEY)
         self.db = DatabaseHandler()
-        # Initialize Gemini 2.5 Pro model
-        print("EditorAgent initialized with Gemini 2.5 Pro")
-        self.model = genai.GenerativeModel('gemini-2.5-pro-preview-05-06') # Using 1.5 pro as per PRD
+        print("EditorAgent initialized with Gemini 3 Pro Preview")
+        self.model = genai.GenerativeModel('gemini-3-pro-preview') # Using 1.5 pro as per PRD
 
     def craft_posts(self, distilled_content: dict, app_name: str, app_description: str, tuon_features_content: str, session_id: Optional[int] = None) -> list:
         """
@@ -50,21 +49,35 @@ class EditorAgent:
         for i, topic_text in enumerate(topics):
             # Constructing a prompt for Gemini Pro
             prompt_parts = [
-                f"You are an expert LinkedIn copywriter for {app_name}. {app_name} is '{app_description}'.",
-                f"Here is a list of {app_name}'s key features that you can subtly reference if relevant:\n{tuon_features_content}\n",
-                f"Your task is to create an engaging and professional LinkedIn post based on the following topic: '{topic_text}'.",
-                "Say the spicy truths out loud. Be bold, honest, and provocative to cut through the noise and make the main thing the main thing. For example:",
-                "  * Most productivity tools are just digital clutter. Tuon is built to actually help you create, not just organize your chaos",
-                "  * Switching between apps kills your flow. Tuon keeps you in one canvas, so your ideas never get lost in the shuffle.",
-                "  * Your old notes are buried and forgotten in other tools. With Tuon, you can tag and resurface any document as context—never start from zero again.",
-                "Use storytelling formats such as problem-solution arcs, user mini-journeys, or metaphor-based framing.",
-                "Begin by identifying a common frustration or challenge professionals face.",
-                f"Illustrate how a feature (or more) of {app_name} naturally resolves or reframes the issue.",
-                "Avoid listing features—show their value through action, outcome, or user benefit.",
-                "End with an insightful takeaway or reflection relevant to the reader's own workflow or mindset.",
-                "Maintain a knowledgeable, helpful, and confident tone. No hashtags.",
-                "Posts can be long or short. Hard character limit is 2000 characters.",
-                "Output only the LinkedIn post text. Do not include any headings or labels."
+                "You are a master conversion copywriter, narrative strategist, and voice engineer specializing in ",
+                "high-performing LinkedIn content. You distill complex products into emotionally resonant stories that ",
+                "shift beliefs, expose uncomfortable truths, and make people reconsider how they work.\n\n",
+                f"{app_name} = '{app_description}'.\n\n",
+                "Context for subtle reference:\n",
+                f"{tuon_features_content}\n\n",
+                "Audience: high-agency professionals who care about productivity, knowledge leverage, and creative output.\n",
+                "They are busy, overloaded with tools, allergic to fluff, and skeptical of hype.\n\n"
+                "Your task: write an engaging, belief-shifting LinkedIn post based on the topic below:\n",
+                f"Topic: '{topic_text}'\n\n",
+                "Core objective: say the spicy truths out loud. Challenge assumptions. Name the real pain. Make the reader feel:\n",
+                "  → \"finally someone said it\"\n",
+                "  → \"that’s why I’m frustrated\"\n",
+                "  → \"there’s a better way\"\n\n",
+                "Post Requirements:\n",
+                "- Start with a strong pattern interrupt (spicy assertion, bold claim, or uncomfortable truth)\n",
+                "- Use a problem → truth → reframe → solution → benefit → reflection structure\n",
+                "- Reference features only through outcomes, not lists (feature → functional benefit → emotional benefit)\n",
+                "- Use mini-stories, metaphors, or relatable scenarios\n",
+                "- Keep pacing tight with short punchy sentences\n",
+                "- No fluff, no hashtags, no emojis, no corporate speak\n",
+                "- End on an insightful reflection that feels like a shift in worldview\n",
+                "- Tone: bold, honest, expert-level clarity, anti-bullshit\n",
+                "- Max length: 2000 characters\n\n",
+                "Examples of acceptable 'spicy truths' (illustrative only):\n"
+                "  * Most productivity tools are just digital clutter. Tuon is built to actually help you create.\n",
+                "  * Switching between apps kills your flow. Staying in one workspace preserves cognitive momentum.\n",
+                "  * Notes buried in old tools are dead notes. Context-aware resurfacing makes knowledge compounding.\n\n",
+                "Output only the LinkedIn post text. No headings. No labels. No commentary."
             ]
             prompt = "\\n".join(prompt_parts)
             print(f"-- Editor Agent Prompt to Gemini (Topic {i+1}) --\\n{prompt[:500]}...\\n-- End of Prompt Snippet --")

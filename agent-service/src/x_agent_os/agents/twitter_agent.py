@@ -3,9 +3,9 @@ import json
 import os
 import urllib.parse # For URL encoding the query
 from typing import Optional
-from agent_service.config import RAPIDAPI_API_KEY
-from agent_service.database import DatabaseHandler
-from agent_service.content_fingerprinting import IncrementalProcessingManager
+from x_agent_os.config import RAPIDAPI_API_KEY
+from x_agent_os.database import DatabaseHandler
+from x_agent_os.content_fingerprinting import IncrementalProcessingManager
 
 class TwitterAgent:
     def __init__(self):
@@ -210,6 +210,12 @@ class TwitterAgent:
             # If you were done with this host, you'd close it: self.conn.close()
             # For now, assume it might be reused if multiple searches are done with one agent instance.
             pass 
+
+    def search_user_tweets(self, username: str, count: int = 20, search_type: str = "Latest") -> list:
+        """Fetch recent tweets from a specific username using search."""
+        handle = username.lstrip("@")
+        query = f"from:{handle}"
+        return self.search_tweets(query, count=count, search_type=search_type, session_id=None)
     
     def search_tweets_incremental(self, query: str, count: int = 20, search_type: str = "Top", session_id: Optional[int] = None) -> dict:
         """

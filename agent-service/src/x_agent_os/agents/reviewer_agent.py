@@ -1,9 +1,9 @@
 import google.generativeai as genai
-from agent_service.config import GOOGLE_API_KEY
+from x_agent_os.config import GOOGLE_API_KEY
 import os
 import json
 from typing import Optional
-from agent_service.database import DatabaseHandler
+from x_agent_os.database import DatabaseHandler
 
 class ReviewerAgent:
     def __init__(self):
@@ -13,8 +13,8 @@ class ReviewerAgent:
         self.db = DatabaseHandler()
         # Initialize Gemini 2.5 Flash model
         # For now, we'll just print, model initialization will be more specific
-        print("ReviewerAgent initialized with Gemini 2.5 Flash")
-        self.model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20') # Using 1.5 flash as per PRD
+        print("ReviewerAgent initialized with Gemini 3 Flash Preview")
+        self.model = genai.GenerativeModel('gemini-3-flash-preview')
 
     def review_and_distill(self, search_results: list, app_name: str, app_description: str, tuon_features_content: str, session_id: Optional[int] = None) -> dict:
         """

@@ -11,7 +11,7 @@ def _default_db_path() -> str:
     env_path = os.getenv("X_AGENT_OS_DB_PATH")
     if env_path:
         return env_path
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[3]
     data_dir = repo_root / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     return str(data_dir / "x_agent_os.db")
@@ -254,6 +254,59 @@ class DatabaseHandler:
                     link_clicks INTEGER,
                     raw_json TEXT,
                     FOREIGN KEY (post_id) REFERENCES posts (id)
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS creator_personas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    handle TEXT UNIQUE NOT NULL,
+                    display_name TEXT,
+                    status TEXT DEFAULT 'active',
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS creator_persona_posts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    persona_id INTEGER NOT NULL,
+                    tweet_id TEXT,
+                    tweet_url TEXT,
+                    content TEXT,
+                    created_at TEXT,
+                    captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    impressions INTEGER,
+                    likes INTEGER,
+                    replies INTEGER,
+                    retweets INTEGER,
+                    quotes INTEGER,
+                    bookmarks INTEGER,
+                    engagement_score REAL,
+                    raw_json TEXT,
+                    FOREIGN KEY (persona_id) REFERENCES creator_personas (id)
+                )
+                """
+            )
+
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS creator_persona_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    persona_id INTEGER NOT NULL,
+                    run_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    window_days INTEGER,
+                    source TEXT,
+                    output_json_path TEXT,
+                    output_md_path TEXT,
+                    summary_json TEXT,
+                    FOREIGN KEY (persona_id) REFERENCES creator_personas (id)
                 )
                 """
             )
@@ -662,6 +715,24 @@ class DatabaseHandler:
     def get_active_skills(self) -> List[Dict[str, Any]]:
         return self.list_skills(include_inactive=False)
 
+    def get_skill_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, slug, name, type, status, priority, config_json, created_at, updated_at
+                FROM skills
+                WHERE slug = ?
+                """,
+                (slug,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            result = dict(row)
+            result["config_json"] = json.loads(result["config_json"])
+            return result
+
     def update_skill_config(self, slug: str, config_json: Dict[str, Any]):
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -674,6 +745,169 @@ class DatabaseHandler:
                 (json.dumps(config_json), slug),
             )
             conn.commit()
+
+    # --- Creator personas ---
+    def upsert_creator_persona(
+        self, handle: str, display_name: Optional[str] = None, notes: Optional[str] = None
+    ) -> int:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO creator_personas (handle, display_name, notes)
+                VALUES (?, ?, ?)
+                ON CONFLICT(handle) DO UPDATE SET
+                    display_name = excluded.display_name,
+                    notes = excluded.notes,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (handle, display_name, notes),
+            )
+            cursor.execute("SELECT id FROM creator_personas WHERE handle = ?", (handle,))
+            row = cursor.fetchone()
+            conn.commit()
+            return int(row["id"]) if row else 0
+
+    def get_creator_persona(self, handle: str) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM creator_personas WHERE handle = ?", (handle,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def insert_creator_persona_posts(self, persona_id: int, posts: List[Dict[str, Any]]):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            for post in posts:
+                cursor.execute(
+                    """
+                    INSERT INTO creator_persona_posts
+                    (persona_id, tweet_id, tweet_url, content, created_at, impressions, likes,
+                     replies, retweets, quotes, bookmarks, engagement_score, raw_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        persona_id,
+                        post.get("tweet_id"),
+                        post.get("tweet_url"),
+                        post.get("content"),
+                        post.get("created_at"),
+                        post.get("impressions"),
+                        post.get("likes"),
+                        post.get("replies"),
+                        post.get("retweets"),
+                        post.get("quotes"),
+                        post.get("bookmarks"),
+                        post.get("engagement_score"),
+                        post.get("raw_json"),
+                    ),
+                )
+            conn.commit()
+
+    def save_creator_persona_run(
+        self,
+        persona_id: int,
+        window_days: int,
+        source: str,
+        output_json_path: str,
+        output_md_path: str,
+        summary_json: Dict[str, Any],
+    ) -> int:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO creator_persona_runs
+                (persona_id, window_days, source, output_json_path, output_md_path, summary_json)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    persona_id,
+                    window_days,
+                    source,
+                    output_json_path,
+                    output_md_path,
+                    json.dumps(summary_json),
+                ),
+            )
+            conn.commit()
+            return cursor.lastrowid
+
+    def get_latest_creator_persona_run(self, handle: str) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT r.*
+                FROM creator_persona_runs r
+                JOIN creator_personas p ON p.id = r.persona_id
+                WHERE p.handle = ?
+                ORDER BY r.run_at DESC
+                LIMIT 1
+                """,
+                (handle,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            result = dict(row)
+            result["summary_json"] = json.loads(result["summary_json"]) if result.get("summary_json") else None
+            return result
+
+    def list_creator_persona_posts(self, persona_id: int, limit: int = 100) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT *
+                FROM creator_persona_posts
+                WHERE persona_id = ?
+                ORDER BY engagement_score DESC, created_at DESC
+                LIMIT ?
+                """,
+                (persona_id, limit),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    def clear_creator_persona_data(self, persona_id: int):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM creator_persona_posts WHERE persona_id = ?", (persona_id,))
+            cursor.execute("DELETE FROM creator_persona_runs WHERE persona_id = ?", (persona_id,))
+            conn.commit()
+
+    def delete_creator_persona(self, handle: str) -> bool:
+        persona = self.get_creator_persona(handle)
+        if not persona:
+            return False
+        persona_id = persona["id"]
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM creator_persona_posts WHERE persona_id = ?", (persona_id,))
+            cursor.execute("DELETE FROM creator_persona_runs WHERE persona_id = ?", (persona_id,))
+            cursor.execute("DELETE FROM creator_personas WHERE id = ?", (persona_id,))
+            conn.commit()
+        return True
+
+    def list_creator_personas(self, active_only: bool = False) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if active_only:
+                cursor.execute(
+                    """
+                    SELECT * FROM creator_personas
+                    WHERE status = 'active'
+                    ORDER BY updated_at DESC
+                    """
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT * FROM creator_personas
+                    ORDER BY updated_at DESC
+                    """
+                )
+            return [dict(row) for row in cursor.fetchall()]
 
     # --- Posts ---
     def create_post(
@@ -822,6 +1056,13 @@ class DatabaseHandler:
             conn.commit()
             return cursor.lastrowid
 
+    def get_conversation_by_id(self, conversation_id: int) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM conversations WHERE id = ?", (conversation_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
     def list_pending_conversations(self) -> List[Dict[str, Any]]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -845,6 +1086,19 @@ class DatabaseHandler:
                 WHERE id = ?
                 """,
                 (status, conversation_id),
+            )
+            conn.commit()
+
+    def update_conversation_reply(self, conversation_id: int, suggested_reply: str):
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE conversations
+                SET suggested_reply = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (suggested_reply, conversation_id),
             )
             conn.commit()
 
@@ -936,5 +1190,19 @@ class DatabaseHandler:
                 ORDER BY published_at DESC
                 """,
                 (f"-{days} days",),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    def list_recent_posts(self, limit: int = 5) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT draft_content, published_content, created_at, published_at
+                FROM posts
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (limit,),
             )
             return [dict(row) for row in cursor.fetchall()]
